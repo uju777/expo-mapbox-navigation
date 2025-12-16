@@ -1,6 +1,7 @@
 const {
   withDangerousMod,
   withAndroidColors,
+  withAndroidColorsNight,
   AndroidConfig,
 } = require("@expo/config-plugins");
 const fs = require("fs/promises");
@@ -76,10 +77,10 @@ const withIosConfig = (config, { accessToken, mapboxMapsVersion }) => {
 };
 
 const withAndroidConfig = (config, { androidColorOverrides }) => {
-  return withAndroidColors(config, (config) => {
+  const configWithAndroidColors = withAndroidColors(config, (config) => {
     let currentModResults = config.modResults;
 
-    for (const [name, value] of Object.entries(androidColorOverrides)) {
+    for (const [name, value] of Object.entries(androidColorOverrides ?? {})) {
       AndroidConfig.Colors.assignColorValue(currentModResults, { name, value });
     }
 
@@ -87,6 +88,26 @@ const withAndroidConfig = (config, { androidColorOverrides }) => {
 
     return config;
   });
+
+  const configWithAndroidColorsNight = withAndroidColorsNight(
+    configWithAndroidColors,
+    (config) => {
+      let currentModResults = config.modResults;
+
+      for (const [name, value] of Object.entries(androidColorOverrides ?? {})) {
+        AndroidConfig.Colors.assignColorValue(currentModResults, {
+          name,
+          value,
+        });
+      }
+
+      config.modResults = currentModResults;
+
+      return config;
+    }
+  );
+
+  return configWithAndroidColorsNight;
 };
 
 const withConfig = (
