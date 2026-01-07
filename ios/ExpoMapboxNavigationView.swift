@@ -87,6 +87,31 @@ class ExpoMapboxNavigationViewController: UIViewController {
 
         routeProgressCancellable = navigation!.routeProgress.sink { progressState in
             if(progressState != nil){
+
+
+                // For some reason the maneuver arrows sometimes (not consistently) show up the same color as the route line making them invisible.
+                // This is a hack to always ensure the arrows are visible.
+                try? self.navigationViewController?.navigationMapView?.mapView.mapboxMap.setLayerProperty(
+                    for: "com.mapbox.navigation.arrow.next",
+                    property: "line-color",
+                    value: "#FFFFFF" 
+                )
+                try? self.navigationViewController?.navigationMapView?.mapView.mapboxMap.setLayerProperty(
+                    for: "com.mapbox.navigation.arrow.next.stroke",
+                    property: "line-color",
+                    value: "#FFFFFF" 
+                )
+                try? self.navigationViewController?.navigationMapView?.mapView.mapboxMap.setLayerProperty(
+                    for: "com.mapbox.navigation.arrow.next.symbol",
+                    property: "icon-color",
+                    value: "#FFFFFF" 
+                )
+                try? self.navigationViewController?.navigationMapView?.mapView.mapboxMap.setLayerProperty(
+                    for: "com.mapbox.navigation.arrow.next.symbol.casing",
+                    property: "icon-color",
+                    value: "#FFFFFF" 
+                )
+                
                self.onRouteProgressChanged?([
                     "distanceRemaining": progressState!.routeProgress.distanceRemaining,
                     "distanceTraveled": progressState!.routeProgress.distanceTraveled,
