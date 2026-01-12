@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.homepage       = package['homepage']
   s.platforms      = { :ios => '13.4', :tvos => '13.4' }
   s.swift_version  = '5.9'
-  s.source         = { git: 'https://github.com/YoussefHenna/expo-mapbox-navigation' }
+  s.source         = { git: 'https://github.com/badatgil/expo-mapbox-navigation' }
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
