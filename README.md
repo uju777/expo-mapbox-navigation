@@ -13,13 +13,13 @@ This package relies on the installtion of `@rnmapbox/maps`, so you'll have to in
 
 ### Install package
 
-**npm으로 설치 (권장):**
+**Install via npm (recommended):**
 
 ```bash
 npm install @badatgil/expo-mapbox-navigation
 ```
 
-또는 GitHub에서 직접:
+Or directly from GitHub:
 
 ```json
 // package.json
