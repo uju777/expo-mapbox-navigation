@@ -13,19 +13,19 @@ This package relies on the installtion of `@rnmapbox/maps`, so you'll have to in
 
 ### Install package
 
-Add the package from GitHub:
+**npm으로 설치 (권장):**
+
+```bash
+npm install @badatgil/expo-mapbox-navigation
+```
+
+또는 GitHub에서 직접:
 
 ```json
 // package.json
 "dependencies": {
-  "expo-mapbox-navigation": "github:badatgil/expo-mapbox-navigation"
+  "@badatgil/expo-mapbox-navigation": "github:badatgil/expo-mapbox-navigation"
 }
-```
-
-Then run:
-
-```
-npm install
 ```
 
 ### Configure package
@@ -36,7 +36,7 @@ In your `app.json` or `app.js`, you'll need to add a plugin for the package unde
 "plugins": [
     ...other plugins
      [
-        "expo-mapbox-navigation",
+        "@badatgil/expo-mapbox-navigation",
         {
           "accessToken": "<YOUR_TOKEN>",
           "mapboxMapsVersion": "<MAPBOX_MAPS_VERSION>"
@@ -69,7 +69,7 @@ The plugin also has a `androidColorOverrides` field which allows you to define r
 "plugins": [
     ...other plugins
      [
-        "expo-mapbox-navigation",
+        "@badatgil/expo-mapbox-navigation",
         {
           "accessToken": "<YOUR_TOKEN>",
           "mapboxMapsVersion": "<MAPBOX_MAPS_VERSION>",

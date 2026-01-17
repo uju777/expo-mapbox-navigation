@@ -1,6 +1,6 @@
 {
-  "name": "expo-mapbox-navigation",
-  "version": "1.5.4",
+  "name": "@badatgil/expo-mapbox-navigation",
+  "version": "1.5.8",
   "description": "Expo module for Mapbox's Navigation SDK",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -28,7 +28,7 @@
     "url": "https://github.com/badatgil/expo-mapbox-navigation/issues"
   },
   "author": "badatgil <manager@badatgil.com> (https://github.com/badatgil)",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "homepage": "https://github.com/badatgil/expo-mapbox-navigation#readme",
   "dependencies": {},
   "devDependencies": {
