@@ -1,7 +1,8 @@
 {
   "name": "@badatgil/expo-mapbox-navigation",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Expo module for Mapbox's Navigation SDK",
+  "readmeFilename": "README.md",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
