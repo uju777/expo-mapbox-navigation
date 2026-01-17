@@ -24,7 +24,7 @@ Or directly from GitHub:
 ```json
 // package.json
 "dependencies": {
-  "@badatgil/expo-mapbox-navigation": "github:badatgil/expo-mapbox-navigation"
+  "@badatgil/expo-mapbox-navigation": "github:uju777/expo-mapbox-navigation"
 }
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "@badatgil/expo-mapbox-navigation",
-  "version": "1.5.9",
+  "version": "1.6.0",
   "description": "Expo module for Mapbox's Navigation SDK",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -23,13 +23,13 @@
     "expo-mapbox-navigation",
     "ExpoMapboxNavigation"
   ],
-  "repository": "https://github.com/badatgil/expo-mapbox-navigation",
+  "repository": "https://github.com/uju777/expo-mapbox-navigation",
   "bugs": {
-    "url": "https://github.com/badatgil/expo-mapbox-navigation/issues"
+    "url": "https://github.com/uju777/expo-mapbox-navigation/issues"
   },
-  "author": "badatgil <manager@badatgil.com> (https://github.com/badatgil)",
+  "author": "uju777 <manager@badatgil.com> (https://github.com/uju777)",
   "license": "MIT",
-  "homepage": "https://github.com/badatgil/expo-mapbox-navigation#readme",
+  "homepage": "https://github.com/uju777/expo-mapbox-navigation#readme",
   "dependencies": {},
   "devDependencies": {
     "@types/react": "^18.0.25",
