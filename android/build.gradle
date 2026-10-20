@@ -69,8 +69,12 @@ android {
     targetCompatibility = agpMajorVersion >= 8 ? JavaVersion.VERSION_17 : JavaVersion.VERSION_11
   }
 
-  kotlinOptions {
-    jvmTarget = agpMajorVersion >= 8 ? "17" : "11"
+  // Built-in Kotlin inherits targetCompatibility and has no kotlinOptions DSL.
+  // Keep the explicit target for projects using the standalone Kotlin plugin.
+  if (project.plugins.hasPlugin('kotlin-android')) {
+    kotlinOptions {
+      jvmTarget = agpMajorVersion >= 8 ? "17" : "11"
+    }
   }
 
   namespace "expo.modules.mapboxnavigation"
