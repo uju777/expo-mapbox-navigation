@@ -1,5 +1,12 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+// AGP 9 ships built-in Kotlin support and registers the `kotlin` extension
+// itself. Applying the Kotlin plugin on top of it fails configuration with
+// "Cannot add extension with name 'kotlin'". Only apply it when nothing has
+// registered that extension yet.
+if (project.extensions.findByName('kotlin') == null) {
+  apply plugin: 'kotlin-android'
+}
+
 apply plugin: 'maven-publish'
 
 group = 'expo.modules.mapboxnavigation'
@@ -62,8 +69,12 @@ android {
     targetCompatibility = agpMajorVersion >= 8 ? JavaVersion.VERSION_17 : JavaVersion.VERSION_11
   }
 
-  kotlinOptions {
-    jvmTarget = agpMajorVersion >= 8 ? "17" : "11"
+  // Built-in Kotlin inherits targetCompatibility and has no kotlinOptions DSL.
+  // Keep the explicit target for projects using the standalone Kotlin plugin.
+  if (project.plugins.hasPlugin('kotlin-android')) {
+    kotlinOptions {
+      jvmTarget = agpMajorVersion >= 8 ? "17" : "11"
+    }
   }
 
   namespace "expo.modules.mapboxnavigation"
