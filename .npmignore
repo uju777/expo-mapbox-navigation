@@ -11,4 +11,10 @@ __tests__
 /android/src/androidTest/
 /android/src/test/
 /android/build/
+/android/.gradle/
 /example/
+
+# Local notes and lock files are not part of the package
+/CLAUDE.md
+/yarn.lock
+.DS_Store

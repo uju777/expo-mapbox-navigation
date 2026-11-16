@@ -6,7 +6,22 @@ A simple Expo wrapper for Mapbox's navigation SDK's on Android and iOS
 
 ### `@rnmapbox/maps`
 
-This package relies on the installtion of `@rnmapbox/maps`, so you'll have to install and setup as explained in their [installtion instructions](https://rnmapbox.github.io/docs/install). The current version of **Expo Mapbox Navigation** package was developed and tested for Mapbox Maps version `11.11.0`, so that is the recommended version when setting up the maps package. It is possible that everything will work with a later version, but unlikely with a lower version. **However, make sure you explcitly set the version with `RNMapboxMapsVersion` because this package relies on this being set to work**
+This package relies on the installation of `@rnmapbox/maps`, so you'll have to install and set it up as explained in their [installation instructions](https://rnmapbox.github.io/docs/install). **Use the versions listed under [Compatibility](#compatibility) and explicitly set the Mapbox Maps version with `RNMapboxMapsVersion`, because this package relies on this being set to work.**
+
+### Compatibility
+
+Version 1.6.x is built for the following combination:
+
+| Dependency | Version |
+| --- | --- |
+| `@rnmapbox/maps` | `10.1.44` |
+| `RNMapboxMapsVersion` / `mapboxMapsVersion` | `11.11.0` |
+| Mapbox Navigation SDK | Android `3.11.0`, iOS `3.8.0` (bundled as `.xcframework`s built against Mapbox Maps `11.11.0`) |
+| Expo SDK | 53 and 54 (verified on Android) |
+
+- **Android:** Navigation SDK `3.11.0` depends on Mapbox Maps `11.14.0`, so Gradle resolves Mapbox Maps to `11.14.0` even when `RNMapboxMapsVersion` is `11.11.0`.
+- **Not supported yet:** `@rnmapbox/maps` `10.3.x` (Mapbox Maps `11.33`). The app builds, but crashes at launch on both Android and iOS because the Navigation SDK versions above do not match that Mapbox Maps version. The config plugin prints a warning during `expo prebuild` when it detects this combination. Supporting current Mapbox Maps versions requires updating the Navigation SDK on both platforms and is planned for the next major version.
+- **Android Gradle Plugin 9** (built-in Kotlin) is supported.
 
 > [!NOTE]  
 > Make sure to follow the instructions carefully and include the proper token in the config plugin and to call the `Mapbox.setAccessToken` function. You can be sure everything is good when you're able to render a map.
@@ -89,6 +104,21 @@ After getting location permissions you can render the navigation map as follows 
 <MapboxNavigationView
     style={{ flex: 1 }}
     coordinates={coordinates} />
+```
+
+> [!NOTE]
+> On Android the Mapbox access token comes from `Mapbox.setAccessToken(...)` of `@rnmapbox/maps`. That call is asynchronous, so render `MapboxNavigationView` only after its promise has resolved. If the view is created before the token is set, it fails with a `MapboxConfigurationException`.
+
+```tsx
+const [tokenReady, setTokenReady] = React.useState(false);
+
+React.useEffect(() => {
+  Mapbox.setAccessToken("<YOUR_TOKEN>").then(() => setTokenReady(true));
+}, []);
+
+if (!tokenReady) {
+  return null;
+}
 ```
 
 ## Props
@@ -193,6 +223,33 @@ Called when the user goes off route
 #### `onRoutesLoaded`
 
 Called when routes are finished loading.
+Provides the loaded routes in the `nativeEvent` as `{ routes: { mainRoute, alternativeRoutes } }`. Each route contains `distance`, `expectedTravelTime` and `legs` with their step coordinates.
+
+#### `onRouteFailedToLoad`
+
+Called when the route request fails. Provides `{ errorMessage: string }` in the `nativeEvent`.
+
+#### `initialLocation`
+
+An object `{latitude: number, longitude: number, zoom?: number}` used to position the map camera before navigation starts. On Android `zoom` defaults to `14`.
+
+#### `followingZoom`
+
+Fixes the zoom level of the camera while it follows the user during navigation.
+
+## Ref methods
+
+#### `recenterMap()`
+
+Moves the camera back to following the user's location.
+
+```tsx
+const ref = React.useRef<MapboxNavigationViewRef>(null);
+
+<MapboxNavigationView ref={ref} style={{ flex: 1 }} coordinates={coordinates} />;
+
+ref.current?.recenterMap();
+```
 
 ## Running the example app
 

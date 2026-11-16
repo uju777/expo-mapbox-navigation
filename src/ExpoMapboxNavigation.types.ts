@@ -1,5 +1,8 @@
-//@ts-ignore
-import { ViewStyle, StyleProp } from "react-native/types";
+// `react-native` is a peer dependency and is not installed in this repository, so the
+// import is ignored when building the module. Consumers resolve these types from their
+// own `react-native` (the old `react-native/types` path no longer exists in newer versions).
+// @ts-ignore
+import type { ViewStyle, StyleProp } from "react-native";
 import { Ref } from "react";
 
 type ProgressEvent = {
