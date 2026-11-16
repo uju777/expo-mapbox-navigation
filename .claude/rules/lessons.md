@@ -1,7 +1,5 @@
-# 교훈 & 시행착오
+# Lessons learned
 
-> 이 프로젝트에서 발견한 교훈, API 함정, 디버깅 노하우 기록
+> Notes on pitfalls, API quirks and debugging findings for this project. Write them in English.
 
 ---
-
-_생성: 2026-02-22_
