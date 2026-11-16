@@ -40,4 +40,6 @@ yarn clean      # expo-module clean
 1. Move the `Unpublished` entries in `CHANGELOG.md` under a new version heading.
 2. Bump `version` in `package.json` and commit as `chore: bump version to x.y.z`.
 3. Tag the commit as `vx.y.z` and push the branch and the tag.
-4. Run `npm publish`, then publish the GitHub release for the tag.
+4. Run `npm publish` from a clean working tree whose `HEAD` is the release tag, then publish the GitHub release for the tag.
+
+Release notes, `README.md` and `CHANGELOG.md` state measured facts only. Say which combination was tested and how, and do not describe a precaution as a past defect.

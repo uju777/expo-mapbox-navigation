@@ -17,11 +17,11 @@ Version 1.6.x is built for the following combination:
 | `@rnmapbox/maps` | `10.1.44` |
 | `RNMapboxMapsVersion` / `mapboxMapsVersion` | `11.11.0` |
 | Mapbox Navigation SDK | Android `3.11.0`, iOS `3.8.0` (bundled as `.xcframework`s built against Mapbox Maps `11.11.0`) |
-| Expo SDK | 53 and 54 (verified on Android) |
+| Expo SDK | 53 and 54, tested on Android only (Expo 54 with the New Architecture disabled) |
 
-- **Android:** Navigation SDK `3.11.0` depends on Mapbox Maps `11.14.0`, so Gradle resolves Mapbox Maps to `11.14.0` even when `RNMapboxMapsVersion` is `11.11.0`.
-- **Not supported yet:** `@rnmapbox/maps` `10.3.x` (Mapbox Maps `11.33`). The app builds, but crashes at launch on both Android and iOS because the Navigation SDK versions above do not match that Mapbox Maps version. The config plugin prints a warning during `expo prebuild` when it detects this combination. Supporting current Mapbox Maps versions requires updating the Navigation SDK on both platforms and is planned for the next major version.
-- **Android Gradle Plugin 9** (built-in Kotlin) is supported.
+- **Android:** Navigation SDK `3.11.0` depends on Mapbox Maps `11.14.0` and calls an API that was added in that version. In our Expo 54 test project Gradle resolved Mapbox Maps to `11.14.0` although `RNMapboxMapsVersion` was `11.11.0`. If your build ends up with an older Mapbox Maps version, the app crashes when navigation starts with `No static method calculateCameraAnimationHint` ([#43](https://github.com/uju777/expo-mapbox-navigation/issues/43)). You can check the resolved version with `./gradlew :app:dependencies`.
+- **Not supported yet:** `@rnmapbox/maps` `10.3.x` (Mapbox Maps `11.33`). In our Expo 58 test project the app built, but crashed at launch on both Android and iOS because the Navigation SDK versions above do not match that Mapbox Maps version. The config plugin prints a warning during `expo prebuild` when it detects a version outside the tested combination. Supporting current Mapbox Maps versions requires updating the Navigation SDK on both platforms.
+- **Android Gradle Plugin 9:** the Gradle script of this module no longer fails to configure with AGP 9 built-in Kotlin. This alone does not make AGP 9 projects work, because `@rnmapbox/maps` `10.1.44` does not configure with AGP 9.
 
 > [!NOTE]  
 > Make sure to follow the instructions carefully and include the proper token in the config plugin and to call the `Mapbox.setAccessToken` function. You can be sure everything is good when you're able to render a map.
