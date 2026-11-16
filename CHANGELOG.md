@@ -6,6 +6,14 @@
 
 ### 🎉 New features
 
+### 🐛 Bug fixes
+
+### 💡 Others
+
+## 1.6.3 — 2026-11-16
+
+### 🎉 New features
+
 - The config plugin now warns during `expo prebuild` when the installed `@rnmapbox/maps` or the configured `mapboxMapsVersion` is a combination that is known to crash at launch.
 
 ### 🐛 Bug fixes
