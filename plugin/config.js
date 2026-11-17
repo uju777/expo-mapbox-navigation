@@ -2,6 +2,7 @@ const {
   withDangerousMod,
   withAndroidColors,
   withAndroidColorsNight,
+  withStringsXml,
   AndroidConfig,
   WarningAggregator,
 } = require("@expo/config-plugins");
@@ -172,8 +173,84 @@ const withIosConfig = (config, { accessToken, mapboxMapsVersion }) => {
   return configWithAccessToken;
 };
 
-const withAndroidConfig = (config, { androidColorOverrides }) => {
-  const configWithAndroidColors = withAndroidColors(config, (config) => {
+// The Mapbox Android SDK reads the `mapbox_access_token` string resource when no token
+// has been set in code. Writing it here makes the token available before the first view
+// is created, independently of when `Mapbox.setAccessToken` is called from JavaScript.
+const ANDROID_ACCESS_TOKEN_RESOURCE = "mapbox_access_token";
+
+// Returns the name of another file in `res/values` that already defines the token
+// resource, or null. A resource may only be defined once per directory: a second
+// definition in strings.xml fails the build with "Duplicate resources".
+const findOtherTokenResourceFile = async (platformProjectRoot) => {
+  const valuesDir = path.join(platformProjectRoot, "app", "src", "main", "res", "values");
+  let entries;
+  try {
+    entries = await fs.readdir(valuesDir);
+  } catch {
+    return null;
+  }
+
+  const definition = new RegExp(`<string[^>]*\\sname="${ANDROID_ACCESS_TOKEN_RESOURCE}"`);
+  for (const entry of entries.sort()) {
+    if (!entry.endsWith(".xml") || entry === "strings.xml") {
+      continue;
+    }
+    const contents = await fs.readFile(path.join(valuesDir, entry), "utf8");
+    if (definition.test(contents)) {
+      return entry;
+    }
+  }
+  return null;
+};
+
+const withAndroidAccessToken = (config, accessToken) => {
+  // Nothing to write without a token.
+  if (typeof accessToken !== "string" || accessToken.trim().length === 0) {
+    return config;
+  }
+
+  return withStringsXml(config, async (config) => {
+    const otherFile = await findOtherTokenResourceFile(config.modRequest.platformProjectRoot);
+    if (otherFile) {
+      config.modResults = AndroidConfig.Strings.removeStringItem(
+        ANDROID_ACCESS_TOKEN_RESOURCE,
+        config.modResults
+      );
+      warnOnce(
+        "android",
+        `res/values/${otherFile} already defines the "${ANDROID_ACCESS_TOKEN_RESOURCE}" string resource, so the accessToken option was not written to strings.xml.`
+      );
+      return config;
+    }
+
+    config.modResults = AndroidConfig.Strings.setStringItem(
+      [
+        {
+          $: { name: ANDROID_ACCESS_TOKEN_RESOURCE, translatable: "false" },
+          _: accessToken,
+        },
+      ],
+      config.modResults
+    );
+    return config;
+  });
+};
+
+// The token is stored in the app on both platforms (Info.plist and a string resource),
+// so it has to be a public one.
+const warnAboutSecretToken = (accessToken) => {
+  if (typeof accessToken === "string" && accessToken.trim().startsWith("sk.")) {
+    const message =
+      'The accessToken option starts with "sk.", which is a secret Mapbox token. The value is written into the app (Info.plist on iOS, a string resource on Android). Use a public token that starts with "pk." instead.';
+    warnOnce("ios", message);
+    warnOnce("android", message);
+  }
+};
+
+const withAndroidConfig = (config, { accessToken, androidColorOverrides }) => {
+  const configWithAccessToken = withAndroidAccessToken(config, accessToken);
+
+  const configWithAndroidColors = withAndroidColors(configWithAccessToken, (config) => {
     let currentModResults = config.modResults;
 
     for (const [name, value] of Object.entries(androidColorOverrides ?? {})) {
@@ -211,12 +288,14 @@ const withConfig = (
   { accessToken, mapboxMapsVersion, androidColorOverrides } = {}
 ) => {
   warnAboutUnsupportedVersions(config, mapboxMapsVersion);
+  warnAboutSecretToken(accessToken);
 
   const configWithIos = withIosConfig(config, {
     accessToken,
     mapboxMapsVersion,
   });
   const configWithAndroid = withAndroidConfig(configWithIos, {
+    accessToken,
     androidColorOverrides,
   });
   return configWithAndroid;

@@ -6,9 +6,23 @@
 
 ### 🎉 New features
 
+- Add the `voiceUnits` prop (`"imperial"` or `"metric"`) to set the unit of the spoken distances independently of the locale ([#31](https://github.com/uju777/expo-mapbox-navigation/issues/31)).
+- Config plugin (Android): the `accessToken` option is now also written to the `mapbox_access_token` string resource. The Mapbox SDK falls back to that resource when no token has been set in code, so the view can be created without waiting for `Mapbox.setAccessToken()`. If another file in `res/values` already defines the resource, the plugin leaves it alone and prints a warning.
+- Config plugin: print a warning when the `accessToken` option starts with `sk.` (a secret token). The option is stored in the app on both platforms.
+
 ### 🐛 Bug fixes
 
+- Android: the route request now sets `voice_units`. Without the `voiceUnits` prop it is derived from the `locale` prop: imperial for the countries `US`, `LR` and `MM`, metric otherwise. The parameter was not set before, so the Directions API default (imperial) was used regardless of the locale. This changes the spoken unit for every locale outside those three countries, for example `en-GB` or a locale without a country such as `en`; set `voiceUnits="imperial"` to keep the previous unit.
+- Android: `onRouteFailedToLoad` is now called when a Map Matching request fails (`useRouteMatchingApi`). The failure was ignored before.
+- Android: when the view cannot be created because no access token is set, a message that names the missing token is written to logcat. Where expo-modules-core provides `AppContext.errorManager`, the message is also reported to the JavaScript console.
+- iOS: `max_height` and `max_width` are only added to the route request when `vehicleMaxHeight` / `vehicleMaxWidth` are set. The request was built with `0.0` for a missing value before.
+
 ### 💡 Others
+
+- Android: changed props are applied in one update after each render instead of one update per prop.
+- Add tests for the config plugin (`yarn test`) and a GitHub Actions workflow that builds the module and runs them.
+
+_How this was tested: on Android with Expo 54, `@rnmapbox/maps` 10.1.44 and a placeholder access token, with the New Architecture disabled and enabled. The test app was built and started on an emulator, and the route request URL and the events were read from logcat. The route itself was never loaded because the token is not valid, so guidance and audio were not exercised. The JavaScript console report for a missing token was observed on Expo 54. The Android code was also compiled with Expo 53 and Expo 58. The iOS changes were compiled for the simulator in an Expo 58 test project and not run._
 
 ## 1.6.4 — 2026-11-16
 

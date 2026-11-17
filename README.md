@@ -21,6 +21,7 @@ Version 1.6.x is built for the following combination:
 
 - **Android:** Navigation SDK `3.11.0` depends on Mapbox Maps `11.14.0` and calls an API that was added in that version. In our Expo 54 test project Gradle resolved Mapbox Maps to `11.14.0` although `RNMapboxMapsVersion` was `11.11.0`. If your build ends up with an older Mapbox Maps version, the app crashes when navigation starts with `No static method calculateCameraAnimationHint` ([#43](https://github.com/uju777/expo-mapbox-navigation/issues/43)). You can check the resolved version with `./gradlew :app:dependencies`.
 - **Not supported yet:** `@rnmapbox/maps` `10.3.x` (Mapbox Maps `11.33`). In our Expo 58 test project the app built, but crashed at launch on both Android and iOS because the Navigation SDK versions above do not match that Mapbox Maps version. The config plugin prints a warning during `expo prebuild` when it detects a version outside the tested combination. Supporting current Mapbox Maps versions requires updating the Navigation SDK on both platforms.
+- **New Architecture:** on Android with Expo 54 we built and started a test app with the New Architecture enabled; the view was created and the route request was sent. A complete navigation session was not run in that configuration.
 - **Android Gradle Plugin 9:** the Gradle script of this module no longer fails to configure with AGP 9 built-in Kotlin. This alone does not make AGP 9 projects work, because `@rnmapbox/maps` `10.1.44` does not configure with AGP 9.
 
 > [!NOTE]  
@@ -107,7 +108,9 @@ After getting location permissions you can render the navigation map as follows 
 ```
 
 > [!NOTE]
-> On Android the Mapbox access token comes from `Mapbox.setAccessToken(...)` of `@rnmapbox/maps`. That call is asynchronous, so render `MapboxNavigationView` only after its promise has resolved. If the view is created before the token is set, it fails with a `MapboxConfigurationException`.
+> On Android the config plugin writes its `accessToken` option to the `mapbox_access_token` string resource. The Mapbox SDK falls back to that resource when no token has been set in code, so the view can be created without waiting for `Mapbox.setAccessToken(...)`. If another file in `android/app/src/main/res/values` already defines `mapbox_access_token`, the plugin does not write the resource again and prints a warning during prebuild.
+>
+> If you do not pass `accessToken` to the plugin, the token only comes from `Mapbox.setAccessToken(...)` of `@rnmapbox/maps`. That call is asynchronous, so in that case render `MapboxNavigationView` only after its promise has resolved. If the view is created before the token is set, it fails with a `MapboxConfigurationException`.
 
 ```tsx
 const [tokenReady, setTokenReady] = React.useState(false);
@@ -138,6 +141,12 @@ When enabled, uses Mapbox's Map Matching API to generate the route instead of th
 #### `locale`
 
 A string representation of a locale/language code that adjusts the Map labels, directions, and voice where possible. By default, uses the devices locale.
+
+Unless `voiceUnits` is set, the unit of the spoken distances follows the locale. On Android the route request is sent with `voice_units=imperial` for the countries `US`, `LR` and `MM` and with `voice_units=metric` for every other locale, including locales without a country such as `en` or `ko`. On iOS the measurement system of the locale is used.
+
+#### `voiceUnits`
+
+`"imperial"` or `"metric"`. Sets the unit of the spoken distances independently of the locale; any other value is ignored. On Android it is sent as `voice_units` with the route request and has no effect together with `useRouteMatchingApi`, because the Map Matching request of the Navigation SDK version in use has no unit option. On iOS it is used as the distance unit of the route and Map Matching requests.
 
 #### `routeProfile`
 
@@ -227,7 +236,7 @@ Provides the loaded routes in the `nativeEvent` as `{ routes: { mainRoute, alter
 
 #### `onRouteFailedToLoad`
 
-Called when the route request fails. Provides `{ errorMessage: string }` in the `nativeEvent`.
+Called when the route request fails, including a failed Map Matching request when `useRouteMatchingApi` is enabled. Provides `{ errorMessage: string }` in the `nativeEvent`.
 
 #### `initialLocation`
 

@@ -69,6 +69,10 @@ class ExpoMapboxNavigationModule : Module() {
         view.setLocale(localeStr)
       }
 
+      Prop("voiceUnits") { view: ExpoMapboxNavigationView, units: String? ->
+        view.setVoiceUnits(units)
+      }
+
       Prop("useRouteMatchingApi") { view: ExpoMapboxNavigationView, useRouteMatchingApi: Boolean? ->
         view.setIsUsingRouteMatchingApi(useRouteMatchingApi)
       }
@@ -113,6 +117,8 @@ class ExpoMapboxNavigationModule : Module() {
       Prop("followingZoom") { view: ExpoMapboxNavigationView, followingZoom: Double? ->
         view.setFollowingZoom(followingZoom)
       }
+
+      OnViewDidUpdateProps { view: ExpoMapboxNavigationView -> view.onPropsUpdated() }
 
       AsyncFunction("recenterMap") { view: ExpoMapboxNavigationView -> view.recenterMap() }
     }

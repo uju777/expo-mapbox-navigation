@@ -33,6 +33,10 @@ public class ExpoMapboxNavigationModule: Module {
           view.controller.setLocale(locale: locale)
       }
 
+      Prop("voiceUnits") { (view: ExpoMapboxNavigationView, units: String?) in
+          view.controller.setVoiceUnits(units: units)
+      }
+
       Prop("useRouteMatchingApi"){ (view: ExpoMapboxNavigationView, useRouteMatchingApi: Bool?) in
           view.controller.setIsUsingRouteMatchingApi(useRouteMatchingApi: useRouteMatchingApi)
       }

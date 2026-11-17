@@ -62,6 +62,7 @@ class ExpoMapboxNavigationViewController: UIViewController {
     var isUsingRouteMatchingApi: Bool = false
     var vehicleMaxHeight: Double? = nil
     var vehicleMaxWidth: Double? = nil
+    var currentVoiceUnits: String? = nil
 
     var onRouteProgressChanged: EventDispatcher? = nil
     var onCancelNavigation: EventDispatcher? = nil
@@ -222,6 +223,24 @@ class ExpoMapboxNavigationViewController: UIViewController {
         update()
     }
 
+    func setVoiceUnits(units: String?) {
+        currentVoiceUnits = units
+        update()
+    }
+
+    // The unit of the spoken distances: the `voiceUnits` prop when it is "imperial" or
+    // "metric", otherwise the measurement system of the locale.
+    func routeDistanceUnit() -> LengthFormatter.Unit {
+        switch currentVoiceUnits {
+        case "imperial":
+            return LengthFormatter.Unit.mile
+        case "metric":
+            return LengthFormatter.Unit.meter
+        default:
+            return currentLocale.usesMetricSystem ? LengthFormatter.Unit.meter : LengthFormatter.Unit.mile
+        }
+    }
+
     func setLocale(locale: String?) {
         if(locale != nil){
             currentLocale = Locale(identifier: locale!)
@@ -322,16 +341,24 @@ class ExpoMapboxNavigationViewController: UIViewController {
     }
 
     func calculateRoutes(waypoints: Array<Waypoint>){
+        var queryItems = [
+            URLQueryItem(name: "exclude", value: currentRouteExcludeList?.joined(separator: ","))
+        ]
+        // Only send the vehicle dimensions that were actually provided. Sending 0.0 for a
+        // missing value put `max_height=0.0` / `max_width=0.0` into every route request.
+        if let maxHeight = vehicleMaxHeight {
+            queryItems.append(URLQueryItem(name: "max_height", value: String(format: "%.1f", maxHeight)))
+        }
+        if let maxWidth = vehicleMaxWidth {
+            queryItems.append(URLQueryItem(name: "max_width", value: String(format: "%.1f", maxWidth)))
+        }
+
         let routeOptions = NavigationRouteOptions(
-            waypoints: waypoints, 
+            waypoints: waypoints,
             profileIdentifier: currentRouteProfile != nil ? ProfileIdentifier(rawValue: currentRouteProfile!) : nil,
-            queryItems: [
-                URLQueryItem(name: "exclude", value: currentRouteExcludeList?.joined(separator: ",")),
-                URLQueryItem(name: "max_height", value: String(format: "%.1f", vehicleMaxHeight ?? 0.0)),
-                URLQueryItem(name: "max_width", value: String(format: "%.1f", vehicleMaxWidth ?? 0.0))
-            ],
-            locale: currentLocale, 
-            distanceUnit: currentLocale.usesMetricSystem ? LengthFormatter.Unit.meter : LengthFormatter.Unit.mile
+            queryItems: queryItems,
+            locale: currentLocale,
+            distanceUnit: routeDistanceUnit()
         )
 
         calculateRoutesTask = Task {
@@ -352,7 +379,7 @@ class ExpoMapboxNavigationViewController: UIViewController {
             waypoints: waypoints, 
             profileIdentifier: currentRouteProfile != nil ? ProfileIdentifier(rawValue: currentRouteProfile!) : nil,
             queryItems: [URLQueryItem(name: "exclude", value: currentRouteExcludeList?.joined(separator: ","))],
-            distanceUnit: currentLocale.usesMetricSystem ? LengthFormatter.Unit.meter : LengthFormatter.Unit.mile
+            distanceUnit: routeDistanceUnit()
         )
         matchOptions.locale = currentLocale
 

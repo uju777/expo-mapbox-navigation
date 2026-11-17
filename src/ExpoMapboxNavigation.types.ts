@@ -41,6 +41,10 @@ export type ExpoMapboxNavigationViewProps = {
   waypointIndices?: number[];
   useRouteMatchingApi?: boolean;
   locale?: string;
+  /**
+   * The unit of the spoken distances. By default it follows the locale.
+   */
+  voiceUnits?: "imperial" | "metric";
   routeProfile?: string;
   routeExcludeList?: string[];
   mapStyle?: string;

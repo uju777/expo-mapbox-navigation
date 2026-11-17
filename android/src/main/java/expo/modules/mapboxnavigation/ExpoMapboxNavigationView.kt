@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Color
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
+import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.bindgen.Expected
 import com.mapbox.common.location.Location
@@ -23,6 +25,7 @@ import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.ImageHolder
 import com.mapbox.maps.MapView
+import com.mapbox.maps.MapboxConfigurationException
 import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
 import com.mapbox.maps.extension.localization.localizeLabels
@@ -91,11 +94,36 @@ import com.mapbox.navigation.voice.model.SpeechError
 import com.mapbox.navigation.voice.model.SpeechValue
 import com.mapbox.navigation.voice.model.SpeechVolume
 import expo.modules.kotlin.AppContext
+import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 import java.util.Locale
 
 val PIXEL_DENSITY = Resources.getSystem().displayMetrics.density
+
+private const val LOG_TAG = "ExpoMapboxNavigation"
+
+private const val MISSING_ACCESS_TOKEN_MESSAGE =
+        "MapboxNavigationView could not be created because no Mapbox access token is set. " +
+                "Pass `accessToken` to the @badatgil/expo-mapbox-navigation config plugin and " +
+                "run prebuild again, or render the view only after `Mapbox.setAccessToken()` " +
+                "has resolved."
+
+private const val MAP_MATCHING_FAILED_MESSAGE = "The Map Matching request failed."
+
+private class MissingAccessTokenException : CodedException(MISSING_ACCESS_TOKEN_MESSAGE)
+
+// Countries that use imperial units. Every other locale, including locales without a
+// country, gets metric units. This matches the rule the Mapbox Navigation SDK applies to
+// the device locale.
+private val IMPERIAL_COUNTRIES = setOf("US", "LR", "MM")
+
+private fun voiceUnitsFor(locale: Locale): String =
+        if (locale.country.uppercase(Locale.ROOT) in IMPERIAL_COUNTRIES) {
+            DirectionsCriteria.IMPERIAL
+        } else {
+            DirectionsCriteria.METRIC
+        }
 
 class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
         ExpoView(context, appContext) {
@@ -127,6 +155,10 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
     private var currentFollowingZoom: Double? = null
     private var vehicleMaxHeight: Double? = null
     private var vehicleMaxWidth: Double? = null
+    private var currentVoiceUnits: String? = null
+
+    // Set by the prop setters and consumed once per props transaction in onPropsUpdated().
+    private var needsUpdate = false
 
     private val onRouteProgressChanged by EventDispatcher()
     private val onCancelNavigation by EventDispatcher()
@@ -291,7 +323,9 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
                     onRoutesReady(result.navigationRoutes)
                 }
                 override fun onCancel() {}
-                override fun failure(failure: MapMatchingFailure) {}
+                override fun failure(failure: MapMatchingFailure) {
+                    onRouteFailedToLoad(mapOf("errorMessage" to MAP_MATCHING_FAILED_MESSAGE))
+                }
             }
 
     private val routesObserver =
@@ -450,8 +484,31 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
         mapboxStyle?.let { routeLineView.renderRouteLineUpdate(it, result) }
     }
 
+    // `AppContext.errorManager` is not part of every expo-modules-core version (it is
+    // missing in the one shipped with Expo SDK 58), so it is looked up at runtime to keep
+    // this file compiling against all of them. Where it is missing, or the lookup fails
+    // for any other reason, the message is only written to logcat.
+    private fun reportToLogBox(exception: CodedException) {
+        try {
+            val manager = appContext.javaClass.getMethod("getErrorManager").invoke(appContext)
+            manager?.javaClass
+                    ?.getMethod("reportExceptionToLogBox", CodedException::class.java)
+                    ?.invoke(manager, exception)
+        } catch (ignored: Exception) {}
+    }
+
     private fun createMapView(id: Int, parent: ViewGroup): MapView {
-        return MapView(context).apply {
+        val view =
+                try {
+                    MapView(context)
+                } catch (error: MapboxConfigurationException) {
+                    // The exception is rethrown below, but Expo reports it to JavaScript
+                    // without a message, so say what is missing first.
+                    Log.e(LOG_TAG, MISSING_ACCESS_TOKEN_MESSAGE)
+                    reportToLogBox(MissingAccessTokenException())
+                    throw error
+                }
+        return view.apply {
             setId(id)
             parent.addView(this)
 
@@ -860,60 +917,61 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
         )
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setCoordinates(coordinates: List<Point>) {
         currentCoordinates = coordinates
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setVehicleMaxHeight(maxHeight: Double?) {
         vehicleMaxHeight = maxHeight
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setVehicleMaxWidth(maxWidth: Double?) {
         vehicleMaxWidth = maxWidth
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
+    // Only the two documented values are accepted; anything else falls back to the locale.
+    fun setVoiceUnits(units: String?) {
+        currentVoiceUnits =
+                when (units) {
+                    DirectionsCriteria.IMPERIAL, DirectionsCriteria.METRIC -> units
+                    else -> null
+                }
+        needsUpdate = true
+    }
+
     fun setLocale(localeStr: String?) {
         currentLocale =
                 if (localeStr == null || localeStr == "default") Locale.getDefault()
                 else Locale.Builder().setLanguageTag(localeStr).build()
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setWaypointIndices(indices: List<Int>?) {
         currentWaypointIndices = indices
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setIsUsingRouteMatchingApi(useRouteMatchingApi: Boolean?) {
         isUsingRouteMatchingApi = useRouteMatchingApi ?: false
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setRouteProfile(profile: String?) {
         currentRouteProfile = profile
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setRouteExcludeList(excludeList: List<String>?) {
         currentRouteExcludeList = excludeList
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setMapStyle(style: String?) {
         currentMapStyle = style
-        update()
+        needsUpdate = true
     }
 
     fun setIsMuted(isMutedProp: Boolean?) {
@@ -934,22 +992,19 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
         }
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setCustomRasterSourceUrl(url: String?) {
         currentCustomRasterSourceUrl = url
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setPlaceCustomRasterLayerAbove(layerId: String?) {
         currentPlaceCustomRasterLayerAbove = layerId
-        update()
+        needsUpdate = true
     }
 
-    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
     fun setDisableAlternativeRoutes(disableAlternativeRoutes: Boolean?) {
         currentDisableAlternativeRoutes = disableAlternativeRoutes
-        update()
+        needsUpdate = true
     }
 
     @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
@@ -961,6 +1016,16 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
 
     fun recenterMap() {
         navigationCamera.requestNavigationCameraToFollowing()
+    }
+
+    // Called once after all changed props of a transaction have been set, so that a
+    // render that changes several props runs update() once instead of once per prop.
+    @com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
+    fun onPropsUpdated() {
+        if (needsUpdate) {
+            needsUpdate = false
+            update()
+        }
     }
 
     fun addCustomRasterLayer() {
@@ -1054,6 +1119,7 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
                         .steps(true)
                         .voiceInstructions(true)
                         .language(currentLocale.toLanguageTag())
+                        .voiceUnits(currentVoiceUnits ?: voiceUnitsFor(currentLocale))
                         .maxHeight(vehicleMaxHeight ?: null)
                         .maxWidth(vehicleMaxWidth ?: null)
                         .alternatives(currentDisableAlternativeRoutes != true)
