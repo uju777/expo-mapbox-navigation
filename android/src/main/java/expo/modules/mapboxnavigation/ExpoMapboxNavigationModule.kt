@@ -1,5 +1,6 @@
 package expo.modules.mapboxnavigation
 
+import android.app.Activity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.mapbox.geojson.Point
@@ -9,6 +10,16 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+// Sets up MapboxNavigationApp, if that has not been done yet, and attaches the activity
+// to it. Has to be called on the main thread. It is called both when the activity enters
+// the foreground and when a view is created, whichever happens first.
+internal fun attachMapboxNavigation(activity: Activity) {
+  if (!MapboxNavigationApp.isSetup()) {
+    MapboxNavigationApp.setup { NavigationOptions.Builder(activity.applicationContext).build() }
+  }
+  MapboxNavigationApp.attach(activity as LifecycleOwner)
+}
 
 class ExpoMapboxNavigationModule : Module() {
   private val activity
@@ -20,12 +31,7 @@ class ExpoMapboxNavigationModule : Module() {
 
     OnActivityEntersForeground {
       (activity as LifecycleOwner).lifecycleScope.launch(Dispatchers.Main) {
-        if (!MapboxNavigationApp.isSetup()) {
-          MapboxNavigationApp.setup {
-            NavigationOptions.Builder(activity.applicationContext).build()
-          }
-        }
-        MapboxNavigationApp.attach(activity as LifecycleOwner)
+        attachMapboxNavigation(activity)
       }
     }
 

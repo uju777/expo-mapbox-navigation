@@ -109,6 +109,10 @@ private const val MISSING_ACCESS_TOKEN_MESSAGE =
                 "run prebuild again, or render the view only after `Mapbox.setAccessToken()` " +
                 "has resolved."
 
+private const val MISSING_NAVIGATION_MESSAGE =
+        "MapboxNavigationApp has no MapboxNavigation instance. This MapboxNavigationView " +
+                "cannot request routes or receive navigation updates."
+
 private const val MAP_MATCHING_FAILED_MESSAGE = "The Map Matching request failed."
 
 private class MissingAccessTokenException : CodedException(MISSING_ACCESS_TOKEN_MESSAGE)
@@ -185,7 +189,19 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
     private val onRoutesLoaded by EventDispatcher()
     private val onRouteFailedToLoad by EventDispatcher()
 
-    private val mapboxNavigation = MapboxNavigationApp.current()
+    // The module attaches the activity to MapboxNavigationApp from a coroutine when the
+    // activity enters the foreground. This view can be created before that coroutine has
+    // run. `MapboxNavigationApp.current()` is null then, and every route request and
+    // observer registration of this view would be skipped without an error. Attach the
+    // activity here as well, so that MapboxNavigation exists before it is read.
+    private val mapboxNavigation = run {
+        appContext.activityProvider?.currentActivity?.let { attachMapboxNavigation(it) }
+        MapboxNavigationApp.current().also {
+            if (it == null) {
+                Log.e(LOG_TAG, MISSING_NAVIGATION_MESSAGE)
+            }
+        }
+    }
     private var mapboxStyle: Style? = null
     private val navigationLocationProvider = NavigationLocationProvider()
     private var voiceInstructionsPlayer =
