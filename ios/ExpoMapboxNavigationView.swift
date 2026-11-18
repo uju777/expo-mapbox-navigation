@@ -230,6 +230,17 @@ class ExpoMapboxNavigationViewController: UIViewController {
 
     // The unit of the spoken distances: the `voiceUnits` prop when it is "imperial" or
     // "metric", otherwise the measurement system of the locale.
+    //
+    // Without the prop, Foundation is asked whether the `locale` prop (the device locale
+    // when the prop is not set) uses the metric system. With a Korean locale ("ko" or
+    // "ko-KR") the unit is therefore meters, which is the unit used in Korea, and with
+    // "en-US" it is miles.
+    //
+    // To get a different unit for a locale, set the `voiceUnits` prop, for example
+    // `locale="en-GB"` together with `voiceUnits="imperial"`. Android does not ask the
+    // system: it uses a fixed list of imperial countries (`IMPERIAL_COUNTRIES` in
+    // ExpoMapboxNavigationView.kt), so the two platforms can pick different units for the
+    // same locale.
     func routeDistanceUnit() -> LengthFormatter.Unit {
         switch currentVoiceUnits {
         case "imperial":

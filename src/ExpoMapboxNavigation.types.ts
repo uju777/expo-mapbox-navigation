@@ -42,7 +42,22 @@ export type ExpoMapboxNavigationViewProps = {
   useRouteMatchingApi?: boolean;
   locale?: string;
   /**
-   * The unit of the spoken distances. By default it follows the locale.
+   * The unit of the spoken distances: `"imperial"` or `"metric"`. Any other value is
+   * ignored.
+   *
+   * When it is not set, the unit follows `locale` (the device locale when `locale` is not
+   * set). A Korean locale (`"ko"` or `"ko-KR"`) gives metric units, which is the unit used
+   * in Korea, and `"en-US"` gives imperial units, so these need no `voiceUnits`.
+   *
+   * Set it when a locale should use the other unit, for example `locale="en-GB"` together
+   * with `voiceUnits="imperial"`. Android and iOS decide the default differently (Android:
+   * imperial for the countries `US`, `LR` and `MM`, metric for every other locale; iOS:
+   * the measurement system that the system reports for the locale), so also set it when
+   * both platforms have to use the same unit for a locale.
+   *
+   * On Android neither this prop nor the locale rule applies together with
+   * `useRouteMatchingApi`, because the Map Matching request of the Navigation SDK version
+   * in use has no unit option.
    */
   voiceUnits?: "imperial" | "metric";
   routeProfile?: string;

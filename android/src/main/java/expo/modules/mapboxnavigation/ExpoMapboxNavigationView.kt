@@ -113,9 +113,25 @@ private const val MAP_MATCHING_FAILED_MESSAGE = "The Map Matching request failed
 
 private class MissingAccessTokenException : CodedException(MISSING_ACCESS_TOKEN_MESSAGE)
 
-// Countries that use imperial units. Every other locale, including locales without a
-// country, gets metric units. This matches the rule the Mapbox Navigation SDK applies to
-// the device locale.
+// Unit of the spoken distances of route requests when the `voiceUnits` prop is not set.
+// Map Matching requests (`useRouteMatchingApi`) are sent without a unit option.
+//
+// The unit follows the country of the `locale` prop (the device locale when the prop is
+// not set): imperial for the countries listed below, metric for every other locale,
+// including locales without a country. This matches the rule the Mapbox Navigation SDK
+// applies to the device locale.
+//
+// With a Korean locale ("ko" or "ko-KR") the distances are therefore spoken in metric
+// units, which is the unit used in Korea. Other examples:
+//
+//   "en-US" (United States)   -> imperial
+//   "en-GB" (United Kingdom)  -> metric
+//   "en" (no country)         -> metric
+//
+// To get a different unit for a locale, set the `voiceUnits` prop to "imperial" or
+// "metric", for example `locale="en-GB"` together with `voiceUnits="imperial"`. To change
+// the default of a country for every app, add or remove its ISO 3166-1 alpha-2 code here.
+// iOS does not use this list: it asks Foundation whether the locale uses the metric system.
 private val IMPERIAL_COUNTRIES = setOf("US", "LR", "MM")
 
 private fun voiceUnitsFor(locale: Locale): String =
