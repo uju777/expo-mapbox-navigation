@@ -6,6 +6,14 @@
 
 ### 🎉 New features
 
+### 🐛 Bug fixes
+
+### 💡 Others
+
+## 1.7.0 — 2026-11-20
+
+### 🎉 New features
+
 - Add the `voiceUnits` prop (`"imperial"` or `"metric"`) to set the unit of the spoken distances independently of the locale ([#31](https://github.com/uju777/expo-mapbox-navigation/issues/31)).
 - Config plugin (Android): the `accessToken` option is now also written to the `mapbox_access_token` string resource. The Mapbox SDK falls back to that resource when no token has been set in code, so the view can be created without waiting for `Mapbox.setAccessToken()`. If another file in `res/values` already defines the resource, the plugin leaves it alone and prints a warning.
 - Config plugin: print a warning when the `accessToken` option starts with `sk.` (a secret token). The option is stored in the app on both platforms.

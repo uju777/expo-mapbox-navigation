@@ -10,7 +10,7 @@ This package relies on the installation of `@rnmapbox/maps`, so you'll have to i
 
 ### Compatibility
 
-Version 1.6.x is built for the following combination:
+This version is built for the following combination:
 
 | Dependency | Version |
 | --- | --- |
