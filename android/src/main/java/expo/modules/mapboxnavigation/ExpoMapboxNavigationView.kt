@@ -396,7 +396,12 @@ class ExpoMapboxNavigationView(context: Context, appContext: AppContext) :
                                 result.navigationRoutes,
                                 alternativesMetadata
                         ) { value ->
-                            mapboxStyle?.let { routeLineView.renderRouteDrawData(it, value) }
+                            // The routes can arrive before the map style has finished
+                            // loading. getStyle() calls back at once when a style is
+                            // loaded and otherwise as soon as the style has loaded.
+                            mapboxMap.getStyle { style: Style ->
+                                routeLineView.renderRouteDrawData(style, value)
+                            }
                         }
                     }
 
