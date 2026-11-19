@@ -17,11 +17,11 @@ Version 1.6.x is built for the following combination:
 | `@rnmapbox/maps` | `10.1.44` |
 | `RNMapboxMapsVersion` / `mapboxMapsVersion` | `11.11.0` |
 | Mapbox Navigation SDK | Android `3.11.0`, iOS `3.8.0` (bundled as `.xcframework`s built against Mapbox Maps `11.11.0`) |
-| Expo SDK | 53 and 54, tested on Android only (Expo 54 with the New Architecture disabled) |
+| Expo SDK | 53 and 54, tested on Android only (Expo 54, with the New Architecture disabled and enabled; see the notes below) |
 
 - **Android:** Navigation SDK `3.11.0` depends on Mapbox Maps `11.14.0` and calls an API that was added in that version. In our Expo 54 test project Gradle resolved Mapbox Maps to `11.14.0` although `RNMapboxMapsVersion` was `11.11.0`. If your build ends up with an older Mapbox Maps version, the app crashes when navigation starts with `No static method calculateCameraAnimationHint` ([#43](https://github.com/uju777/expo-mapbox-navigation/issues/43)). You can check the resolved version with `./gradlew :app:dependencies`.
 - **Not supported yet:** `@rnmapbox/maps` `10.3.x` (Mapbox Maps `11.33`). In our Expo 58 test project the app built, but crashed at launch on both Android and iOS because the Navigation SDK versions above do not match that Mapbox Maps version. The config plugin prints a warning during `expo prebuild` when it detects a version outside the tested combination. Supporting current Mapbox Maps versions requires updating the Navigation SDK on both platforms.
-- **New Architecture:** on Android with Expo 54 we built and started a test app with the New Architecture enabled; the view was created and the route request was sent. A complete navigation session was not run in that configuration.
+- **New Architecture:** on Android with Expo 54 we built and started a test app with the New Architecture enabled. With a placeholder token the view was created and the route request was sent. With a real token the code of this version was driven once on an emulator from route load to arrival; in that drive the Navigation SDK rerouted once right after the start. An earlier drive in the same configuration was made before the route line fix and showed no route line. The details are in the 1.7.0 changelog.
 - **Android Gradle Plugin 9:** the Gradle script of this module no longer fails to configure with AGP 9 built-in Kotlin. This alone does not make AGP 9 projects work, because `@rnmapbox/maps` `10.1.44` does not configure with AGP 9.
 
 > [!NOTE]  
